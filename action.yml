@@ -1,26 +1,30 @@
-name: 'Mayhem for API'
-description: 'Automatically test your REST APIs with your OpenAPI specs and Postman collections'
-author: 'ForAllSecure'
+name: "Mayhem for Code"
+description: "Automatically test your Rust targets with Mayhem"
+author: "ForAllSecure"
 inputs:
-  mapi-token:
-    description: Mayhem for API service account token
+  mayhem-token:
+    description: Personal API token for authenticating to Mayhem
     required: true
-  api-url:
-    description: URL pointing to your running API you started before calling this action (don't fuzz your production API!)
+  mayhem-url:
+    description: URL pointing to your Mayhem instance
     required: true
-  api-spec:
-    description: Path to your Swagger 2.0 or OpenAPI 3.0 specification, or your Postman collection. Can be a URL.
-    required: true
+  image:
+    description: Name of the image to run analysis in
+    default: forallsecure/debian-buster:latest
+    required: false
   duration:
     description: Scan duration
-    default: 60
+    default: "30"
+    required: false
   sarif-report:
     description: SARIF output path. You can upload ot to GitHub using the 'github/codeql-action/upload-sarif@v1' action
+    required: false
   html-report:
     description: HTML output path. You can artifact to GitHub using the 'actions/upload-artifact@v2' action
+    required: false
 runs:
-  using: 'node12'
-  main: 'dist/index.js'
+  using: "node12"
+  main: "dist/index.js"
 branding:
-  icon: 'shield'
-  color: 'red'
+  icon: "shield"
+  color: "red"

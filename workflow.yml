@@ -4,57 +4,50 @@
 #
 # To use this workflow, you will need to:
 #
-# 1. Create a Mayhem for API account at
-#    https://mayhem4api.forallsecure.com/signup (30-day free trial)
+# 1. Create a Mayhem for Code account at
+#    https://mayhem.forallsecure.com/ (free trial)
 #
-# 2. Create a service account token `mapi organization service-account create
-#    <org-name> <service-account-name>`
+# 2. Create an API authentication token
 #
-# 3. Add the service account token as a a secret in GitHub called "MAPI_TOKEN"
+# 3. Add the API authentication token as a a secret in GitHub called "MAYHEM_TOKEN"
 #
-# 4. Update the "Start your API" step to run your API in the background before
-#    starting the Mayhem for API scan, and update the `api-url` & `api-spec`
-#    field.
+# 4. Update the "Build your target" step to build your target
 #
-# If you have any questions, please contact us at mayhem4api@forallsecure.com
+# If you have any questions, please contact us at support@forallsecure.com
 
-name: "Mayhem for API"
+name: "Mayhem for Code"
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  mayhem-for-api:
+  mayhem-for-code:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      # Run your API in the background. Ideally, the API would run in debug
-      # mode & send stacktraces back on "500 Internal Server Error" responses
-      # (don't do this in production though)
-      - name: Start your API
-        run: ./run_your_api.sh & # <- update this
+      # Build your target so that mayhem is ready to run them
+      - name: Build your target
+        run: ./build_your_target.sh & # <- update this
 
-      # Run Mayhem for API
-      - name: Mayhem for API
-        uses: ForAllSecure/mapi-action@v1
+      # Run Mayhem for Code
+      - name: Mayhem for Code
+        uses: ForAllSecure/mcode-action@v1
         continue-on-error: true
         with:
-          mapi-token: ${{ secrets.MAPI_TOKEN }}
-          api-url: http://localhost:8080 # <- update this
-          api-spec: http://localhost:8080/openapi.json # <- update this
-          duration: 60
-          sarif-report: mapi.sarif
-          html: mapi.html
+          mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+          mayhem-url: ${{ secrets.MAYHEM_URL }}
+          sarif-report: mcode.sarif
+          html: mcode.html
 
       # Archive HTML report
-      - name: Archive Mayhem for API report
+      - name: Archive Mayhem for Code report
         uses: actions/upload-artifact@v2
         with:
-          name: mapi-report
-          path: mapi.html
+          name: mcode-report
+          path: mcode.html
 
       # Upload SARIF file (only available on public repos or github
       # enterprise). If you cannot use this action, other report format are
@@ -62,5 +55,4 @@ jobs:
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v1
         with:
-          sarif_file: mapi.sarif
-
+          sarif_file: mcode.sarif

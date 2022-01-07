@@ -1,13 +1,13 @@
-# Mayhem for API GitHub Action
+# Mayhem for Code GitHub Action
 
-[![Mayhem for API](https://mayhem4api.forallsecure.com/downloads/img/mapi-logo-full-color.svg)](http://mayhem4api.forallsecure.com/signup)
+[![Mayhem for Code](https://mayhem4api.forallsecure.com/downloads/img/mapi-logo-full-color.svg)](http://mayhem4api.forallsecure.com/signup)
 
 A GitHub Action for using Mayhem for API to check for reliability,
 performance and security issues in your APIs. 
 
-## About Mayhem for API
+## About Mayhem for Code
 
-🧪 Modern App Testing: Mayhem for API is a dynamic testing tool that
+🧪 Modern App Testing: Mayhem for Code is a dynamic testing tool that
 catches reliability, performance and security bugs before they hit
 production.
 
@@ -20,14 +20,14 @@ our job easier!
 and PRs. We make it easy, and provide results right in your PRs where
 you want them. Adding Mayhem for API to a DevOps pipeline is easy.
 
-Want to try it? [Sign up for free](http://mayhem4api.forallsecure.com/signup) today!
+Want to try it? [Sign up for free](http://mayhem.forallsecure.com/signup) today!
 
 ## Usage
 
 Use the Action as follows:
 
 ```yaml
-name: Example workflow for Mayhem for API
+name: Example workflow for Mayhem for Code
 on: push
 jobs:
   security:
@@ -35,15 +35,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Start your API
-      run: ./run_your_api.sh & # <- update this
+    - name: Build your target
+      run: ./build_your_target.sh & # <- update this
 
-    - name: Run Mayhem for API to check for vulnerabilities
-      uses: ForAllSecure/mapi-action@v1
+    - name: Run Mayhem for Code to check for vulnerabilities
+      uses: ForAllSecure/mcode-action@v1
       with:
-        mapi-token: ${{ secrets.MAPI_TOKEN }}
-        api-url: http://localhost:8000 # <- update this
-        api-spec: your-openapi-spec-or-postman-collection.json # <- update this
+        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+        mayhem-url: ${{ secrets.MAYHEM_URL }}
 ```
 
 This repo contains a [full example](workflow.yml) for reference.
@@ -52,21 +51,20 @@ The action accepts the follow inputs:
 
 | Required | Input Name | Type | Description | Default
 | --- | --- | --- | --- | ---
-| ✔️ | `mapi-token` | string | Mayhem for API service account token | 
-| ✔️ | `api-url` | string | URL to your running API. *Example:* http://localhost:8000/api/v1 | 
-| ✔️ | `api-spec` | string | Path or URL to your Swagger spec, OpenAPI spec, or Postman collection.| 
+| ✔️ | `mayhem-token` | string | Mayhem for API service account token | 
+| ✔️ | `mayhem-url` | string | URL to your running API. *Example:* http://localhost:8000/api/v1 | 
 |   | `duration` | number | Duration of scan, in seconds | 60 
 |   | `html-report` | string | Path to the generated SARIF report | 
 |   | `sarif-report` | string | Path to the generated HTML report | 
 
 
-### Getting your Mayhem for API token
+### Getting your Mayhem for Code token
 
-The Actions example above refer to a Mayhem for API token:
+The Actions example above refer to a Mayhem for Code token:
 
 ```yaml
 with:
-  mapi-token: ${{ secrets.MAPI_TOKEN }}
+  mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
 ```
 
 You can create a [service account
@@ -83,11 +81,11 @@ GitHub repository or organization.
 ### Continuing on error
 
 The above examples will fail the workflow when issues are found. If you
-want to ensure the Action continues, even if Mayhem for API found
+want to ensure the Action continues, even if Mayhem for Code found
 issues, then continue-on-error can be used.
 
 ```yaml
-name: Example workflow for Mayhem for API
+name: Example workflow for Mayhem for Code
 on: push
 jobs:
   security:
@@ -96,22 +94,21 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Start your API
-      run: ./run_your_api.sh & # <- update this
+      run: ./build_your_target.sh & # <- update this
 
-    - name: Run Mayhem for API to check for vulnerabilities
-      uses: ForAllSecure/mapi-action@v1
+    - name: Run Mayhem for Code to check for vulnerabilities
+      uses: ForAllSecure/mcode-action@v1
       continue-on-error: true
       with:
-        mapi-token: ${{ secrets.MAPI_TOKEN }}
-        api-url: http://localhost:8000 # <- update this
-        api-spec: your-openapi-spec-or-postman-collection.json # <- update this
+        mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+        mayhem-url: ${{ secrets.MAYHEM_URL }}
 ```
 
 # Reports
 
-Mayhem for API generate reports when you pass `sarif-report` or
+Mayhem for Code generate reports when you pass `sarif-report` or
 `html-report` to the input. Make sure to pass `continue-on-error` to the
-Mayhem for API step if you want to process the reports in follow-up
+Mayhem for Code step if you want to process the reports in follow-up
 steps.
 
 ## Artifact HTML Report
@@ -121,21 +118,20 @@ steps.
 To artifact the report in your build, add this step to your pipeline:
 
 ```yaml
-- name: Run Mayhem for API to check for vulnerabilities
-  uses: ForAllSecure/mapi-action@v1
+- name: Run Mayhem for Code to check for vulnerabilities
+  uses: ForAllSecure/mcode-action@v1
   continue-on-error: true
   with:
-    mapi-token: ${{ secrets.MAPI_TOKEN }}
-    api-url: http://localhost:8000 # <- update this
-    api-spec: your-openapi-spec-or-postman-collection.json # <- update this
-    html-report: mapi.html
+    mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+    mayhem-url: ${{ secrets.MAYHEM_URL }}
+    html-report: mcode.html
 
 # Archive HTML report
-- name: Archive Mayhem for API report
+- name: Archive Mayhem for Code report
   uses: actions/upload-artifact@v2
   with:
-    name: mapi-report
-    path: mapi.html
+    name: mcode-report
+    path: mcode.html
 ```
 
 ## GitHub Code Scanning support
@@ -150,23 +146,18 @@ Plan or have a public repository. To upload the SARIF report, add this
 step to your pipeline:
 
 ```yaml
-- name: Run Mayhem for API to check for vulnerabilities
-  uses: ForAllSecure/mapi-action@v1
+- name: Run Mayhem for Code to check for vulnerabilities
+  uses: ForAllSecure/mcode-action@v1
   continue-on-error: true
   with:
-    mapi-token: ${{ secrets.MAPI_TOKEN }}
-    api-url: http://localhost:8000 # <- update this
-    api-spec: your-openapi-spec-or-postman-collection.json # <- update this
-    sarif-report: mapi.sarif
+    mayhem-token: ${{ secrets.MAYHEM_TOKEN }}
+    mayhem-url: ${{ secrets.MAYHEM_URL }}
+    sarif-report: mcode.sarif
 
 # Upload SARIF file (only available on public repos or github enterprise)
 - name: Upload SARIF file
   uses: github/codeql-action/upload-sarif@v1
   with:
-    sarif_file: mapi.sarif
+    sarif_file: mcode.sarif
 ```
 
-If your API server sends back stacktraces in the 500 Internal Server
-Error (only do this in a test environment -- never in production!),
-Mayhem for API will try to map issues it finds to the exact line of code
-that triggered the issue.

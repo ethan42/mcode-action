@@ -1,51 +1,33 @@
 import * as core from '@actions/core'
 import * as tc from '@actions/tool-cache'
 import * as exec from '@actions/exec'
-import {chmodSync} from 'fs'
+import { chmodSync } from 'fs'
 import slugify from 'slugify'
 
-import {cliInfo} from './mapiAPI'
-
 // Return local path to donwloaded or cached CLI
-async function mapiCLI(): Promise<string> {
+async function mcodeCLI(): Promise<string> {
   // Get latest version from API
   let cliVersion = 'latest'
-  try {
-    cliVersion = (await cliInfo()).latest_version
-  } catch (err) {
-    core.info(err.message)
-    core.debug('Could not get CLI version. Using latest')
-  }
-
-  // Infer right version from environment
-  let os = ''
-  let bin = 'mapi'
-  if (process.platform === 'win32') {
-    os = 'windows-amd64'
-    bin = 'mapi.exe'
-  } else if (process.platform === 'darwin') {
-    os = 'macos'
-  } else {
-    os = 'linux-musl'
-  }
+  let os = 'Linux'
+  let bin = 'mayhem'
 
   // Return cache if available
-  const cachedPath = tc.find('mapi', cliVersion, os)
+  const cachedPath = tc.find(bin, cliVersion, os)
   if (cachedPath) {
     core.debug(`found cache: ${cachedPath}`)
     return `${cachedPath}/${bin}`
   }
 
   // Download the CLI and cache it if version is set
-  const mapiPath = await tc.downloadTool(
-    `https://mayhem4api.forallsecure.com/downloads/cli/${cliVersion}/${os}/${bin}`
+  const mcodePath = await tc.downloadTool(
+    `https://mayhem.forallsecure.com/downloads/cli/${os}/${bin}`
   )
-  chmodSync(mapiPath, 0o755)
-  if (cliVersion === 'latest') {
-    return mapiPath
-  }
+  chmodSync(mcodePath, 0o755)
+  // if (cliVersion === 'latest') {
+  //   return mcodePath
+  // }
 
-  const folder = await tc.cacheFile(mapiPath, bin, 'mapi', cliVersion, os)
+  const folder = await tc.cacheFile(mcodePath, bin, bin, cliVersion, os)
   return `${folder}/${bin}`
 }
 
@@ -53,13 +35,12 @@ async function run(): Promise<void> {
   try {
     // Disable auto udpates since we always get the latest CLI
     process.env['SKIP_MAPI_AUTO_UPDATE'] = 'true'
-    const cli = await mapiCLI()
+    const cli = await mcodeCLI()
 
     // Load inputs
-    const mapiToken: string = core.getInput('mapi-token', {required: true})
-    const apiUrl: string = core.getInput('api-url', {required: true})
-    const apiSpec: string = core.getInput('api-spec', {required: true})
-    const duration: string = core.getInput('duration', {required: true})
+    const mayhemToken: string = core.getInput('mayhem-token', { required: true })
+    const mayhemUrl: string = core.getInput('mayhem-url', { required: true })
+    const duration: string = core.getInput('duration', { required: true })
     const sarifReport: string | undefined = core.getInput('sarif-report')
     const htmlReport: string | undefined = core.getInput('html-report')
 
@@ -70,10 +51,10 @@ async function run(): Promise<void> {
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
       )
     }
-    const apiName = slugify(repo.replace('/', '-'), {lower: true})
+    const projectName = slugify(repo.replace('/', '-'), { lower: true })
 
     // Generate mapi run args based on inputs
-    const args = ['run', apiName, duration, apiSpec, '--url', apiUrl]
+    const args = ['run']
     if (sarifReport) {
       args.push('--sarif', sarifReport)
     }
@@ -82,24 +63,25 @@ async function run(): Promise<void> {
     }
     core.debug(args.join(' '))
 
-    process.env['MAPI_TOKEN'] = mapiToken
+    process.env['MAYHEM_TOKEN'] = mayhemToken
+    process.env['MAYHEM_URL'] = mayhemUrl
 
     // We expect the token to be a service account which can only belong to a
     // single organization, therefore we do not need to specify the org
     // explicitely here. We also ignore failure since we might have created the
     // target in a previous run.
-    await exec.exec(cli, ['target', 'create', apiName, apiUrl], {
-      ignoreReturnCode: true
-    })
+    // await exec.exec(cli, ['target', 'create', apiName, apiUrl], {
+    //   ignoreReturnCode: true
+    // })
     // Start fuzzing
-    const res = await exec.exec(cli, args, {ignoreReturnCode: true})
+    const res = await exec.exec(cli, args, { ignoreReturnCode: true })
     if (res !== 0) {
       // TODO: should we print issues here?
-      throw new Error('The Mayhem for API scan found issues in the API')
+      throw new Error('The Mayhem for Code scan found issues in the Target')
     }
   } catch (error) {
-    core.info(`mapi action failed with: ${error.message}`)
-    core.setFailed(error.message)
+    core.info(`mcode action failed with: ${error}`)
+    core.setFailed(`${error}`)
   }
 }
 
