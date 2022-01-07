@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as tc from '@actions/tool-cache'
-import {chmodSync} from 'fs'
+import { chmodSync } from 'fs'
 import slugify from 'slugify'
 
 // Return local path to donwloaded or cached CLI
@@ -20,7 +20,7 @@ async function mcodeCLI(): Promise<string> {
 
   // Download the CLI and cache it if version is set
   const mcodePath = await tc.downloadTool(
-    `https://mayhem.forallsecure.com/downloads/cli/${os}/${bin}`
+    `https://mayhem.forallsecure.com/cli/${os}/${bin}`
   )
   chmodSync(mcodePath, 0o755)
   // if (cliVersion === 'latest') {
@@ -38,9 +38,9 @@ async function run(): Promise<void> {
     const cli = await mcodeCLI()
 
     // Load inputs
-    const mayhemToken: string = core.getInput('mayhem-token', {required: true})
-    const mayhemUrl: string = core.getInput('mayhem-url', {required: true})
-    const duration: string = core.getInput('duration', {required: true})
+    const mayhemToken: string = core.getInput('mayhem-token', { required: true })
+    const mayhemUrl: string = core.getInput('mayhem-url', { required: true })
+    const duration: string = core.getInput('duration', { required: true })
     const sarifReport: string | undefined = core.getInput('sarif-report')
     const htmlReport: string | undefined = core.getInput('html-report')
 
@@ -51,7 +51,7 @@ async function run(): Promise<void> {
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
       )
     }
-    const projectName = slugify(repo.replace('/', '-'), {lower: true})
+    const projectName = slugify(repo.replace('/', '-'), { lower: true })
 
     // Generate mapi run args based on inputs
     const args = ['run']
@@ -74,7 +74,7 @@ async function run(): Promise<void> {
     //   ignoreReturnCode: true
     // })
     // Start fuzzing
-    const res = await exec.exec(cli, args, {ignoreReturnCode: true})
+    const res = await exec.exec(cli, args, { ignoreReturnCode: true, shell: true, stdio: ['ignore', 'inherit', 'inherit'] })
     if (res !== 0) {
       // TODO: should we print issues here?
       throw new Error('The Mayhem for Code scan found issues in the Target')
