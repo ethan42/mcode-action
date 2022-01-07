@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
-import * as tc from '@actions/tool-cache'
 import * as exec from '@actions/exec'
+import * as tc from '@actions/tool-cache'
 import { chmodSync } from 'fs'
 import slugify from 'slugify'
 
@@ -79,9 +79,11 @@ async function run(): Promise<void> {
       // TODO: should we print issues here?
       throw new Error('The Mayhem for Code scan found issues in the Target')
     }
-  } catch (error) {
-    core.info(`mcode action failed with: ${error}`)
-    core.setFailed(`${error}`)
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      core.info(`mcode action failed with: ${err.message}`)
+      core.setFailed(err.message)
+    }
   }
 }
 
