@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as tc from '@actions/tool-cache'
-// import * as github from '@actions/github'
+// import * as github from '@actions/github-script'
 import { chmodSync } from 'fs'
 import slugify from 'slugify'
 
@@ -72,7 +72,7 @@ async function run(): Promise<void> {
       sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
       run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration})
       ${cli} wait $run -n ${account} --sarif local.sarif
-      [[ "$(${cli} show $run | grep Defects | cut -f 2 -d :)" == " 0" ]]
+      [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]]
     done`
 
     process.env['MAYHEM_TOKEN'] = mayhemToken

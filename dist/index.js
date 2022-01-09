@@ -38,7 +38,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(186));
 const exec = __importStar(__nccwpck_require__(514));
 const tc = __importStar(__nccwpck_require__(784));
-// import * as github from '@actions/github'
+// import * as github from '@actions/github-script'
 const fs_1 = __nccwpck_require__(747);
 // Return local path to donwloaded or cached CLI
 function mcodeCLI() {
@@ -97,7 +97,7 @@ function run() {
       sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
       run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration})
       ${cli} wait $run -n ${account} --sarif local.sarif
-      [[ "$(${cli} show $run | grep Defects | cut -f 2 -d :)" == " 0" ]]
+      [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]]
     done`;
             process.env['MAYHEM_TOKEN'] = mayhemToken;
             process.env['MAYHEM_URL'] = mayhemUrl;
