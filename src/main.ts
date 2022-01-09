@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as tc from '@actions/tool-cache'
-// import * as github from '@actions/github-script'
+import * as github from '@actions/github'
 import { chmodSync } from 'fs'
 // import slugify from 'slugify'
 
@@ -46,15 +46,21 @@ async function run(): Promise<void> {
       core.getInput('image') || 'forallsecure/debian-buster:latest'
     // const sarifReport: string | undefined = core.getInput('sarif-report')
     // const htmlReport: string | undefined = core.getInput('html-report')
-    // const ghtoken: string | undefined = core.getInput('github-token')
+    const githubToken: string | undefined = core.getInput('github-token')
 
-    // const oktokit = github.getOktokit(ghtoken)
-    // const context = github.context
-    // const { pull_request } = context.payload
-    // await octokit.rest.issues.createComment({
-    //   ...context.repo,
-
-    // })
+    if (githubToken !== undefined) {
+      const octokit = github.getOctokit(githubToken)
+      const context = github.context
+      const { pull_request } = context.payload
+      if (pull_request !== undefined) {
+        await octokit.rest.issues.createComment({
+          ...context.repo,
+          issue_number: pull_request.number,
+          body: 'Mayhem it!'
+        })
+      }
+      core.debug(`${octokit}`)
+    }
 
     // Auto-generate target name
     const repo = process.env['GITHUB_REPOSITORY']
