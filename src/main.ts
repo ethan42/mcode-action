@@ -42,6 +42,7 @@ async function run(): Promise<void> {
     const mayhemToken: string = core.getInput('mayhem-token', { required: true })
     const mayhemUrl: string = core.getInput('mayhem-url', { required: true })
     const duration: string = core.getInput('duration', { required: false }) || "30"
+    const image: string = core.getInput('image') || "forallsecure/debian-buster:latest"
     const sarifReport: string | undefined = core.getInput('sarif-report')
     const htmlReport: string | undefined = core.getInput('html-report')
     const ghtoken: string | undefined = core.getInput('github-token')
@@ -65,14 +66,15 @@ async function run(): Promise<void> {
 
     const script = core.getInput('mayhem-script', { required: false }) || `
     for fuzz_target in $(cargo fuzz list); do
-      echo $fuzz_target
-      cargo fuzz build $fuzz_target
+      echo $fuzz_target;
+      cargo fuzz build $fuzz_target;
       ${cli} package fuzz/target/*/*/$fuzz_target -o $fuzz_target;
+      rm -rf $fuzz_target/root/lib;
       [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
       sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
-      run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration})
-      ${cli} wait $run -n ${account} --sarif local.sarif
-      [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]]
+      run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration} --baseimage ${image});
+      ${cli} wait $run -n ${account} --sarif local.sarif;
+      [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
     done`
 
     process.env['MAYHEM_TOKEN'] = mayhemToken
