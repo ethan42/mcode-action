@@ -1,6 +1,6 @@
 # Mayhem for Code GitHub Action
 
-[![Mayhem for Code](https://drive.google.com/file/d/1JXEbfCDMMwwnDaOgs5-XlPWQwZR93fv4/preview)](http://mayhem.forallsecure.com/signup)
+[![Mayhem for Code](https://drive.google.com/uc?export=view&id=1JXEbfCDMMwwnDaOgs5-XlPWQwZR93fv4)](http://mayhem.forallsecure.com/)
 
 A GitHub Action for using Mayhem for API to check for reliability,
 performance and security issues in your APIs. 
@@ -20,7 +20,7 @@ our job easier!
 and PRs. We make it easy, and provide results right in your PRs where
 you want them. Adding Mayhem for API to a DevOps pipeline is easy.
 
-Want to try it? [Sign up for free](http://mayhem.forallsecure.com/signup) today!
+Want to try it? [Sign up for free](http://mayhem.forallsecure.com/) today!
 
 ## Usage
 
