@@ -71,15 +71,25 @@ function run() {
             // Load inputs
             const mayhemToken = core.getInput('mayhem-token', { required: true });
             const mayhemUrl = core.getInput('mayhem-url', { required: true });
-            const duration = core.getInput('duration', { required: true });
+            const duration = core.getInput('duration', { required: false }) || "30";
             const sarifReport = core.getInput('sarif-report');
             const htmlReport = core.getInput('html-report');
             // Auto-generate target name
             const repo = process.env['GITHUB_REPOSITORY'];
+            const account = repo === null || repo === void 0 ? void 0 : repo.split("/")[0];
             if (repo === undefined) {
                 throw Error('Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?');
             }
-            const script = core.getInput('mayhem-script', { required: false });
+            const script = core.getInput('mayhem-script', { required: false }) || `
+    for fuzz_target in $(cargo fuzz list); do
+      echo $fuzz_target
+      ${cli} package fuzz/target/*/*/$fuzz_target -o $fuzz_target;
+      [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
+      sed -i 's,project: .*,project: '$MAYHEM_PROJECT,g $fuzz_target/Mayhemfile;
+      run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration})
+      ${cli} wait $run -n $account --sarif local.sarif
+      [[ "$(${cli} show $run | grep Defects | cut -f 2 -d :)" == " 0" ]]
+    done`;
             process.env['MAYHEM_TOKEN'] = mayhemToken;
             process.env['MAYHEM_URL'] = mayhemUrl;
             process.env['MAYHEM_PROJECt'] = repo;
