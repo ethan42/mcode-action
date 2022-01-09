@@ -56,6 +56,7 @@ async function run(): Promise<void> {
     const script = core.getInput('mayhem-script', { required: false }) || `
     for fuzz_target in $(cargo fuzz list); do
       echo $fuzz_target
+      cargo fuzz build $fuzz_target
       ${cli} package fuzz/target/*/*/$fuzz_target -o $fuzz_target;
       [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
       sed -i 's,project: .*,project: '$MAYHEM_PROJECT,g $fuzz_target/Mayhemfile;
