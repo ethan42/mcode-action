@@ -3,14 +3,14 @@ import * as exec from '@actions/exec'
 import * as tc from '@actions/tool-cache'
 // import * as github from '@actions/github-script'
 import { chmodSync } from 'fs'
-import slugify from 'slugify'
+// import slugify from 'slugify'
 
 // Return local path to donwloaded or cached CLI
 async function mcodeCLI(): Promise<string> {
   // Get latest version from API
-  let cliVersion = 'latest'
-  let os = 'Linux'
-  let bin = 'mayhem'
+  const cliVersion = 'latest'
+  const os = 'Linux'
+  const bin = 'mayhem'
 
   // Return cache if available
   const cachedPath = tc.find(bin, cliVersion, os)
@@ -41,11 +41,12 @@ async function run(): Promise<void> {
     // Load inputs
     const mayhemToken: string = core.getInput('mayhem-token', { required: true })
     const mayhemUrl: string = core.getInput('mayhem-url', { required: true })
-    const duration: string = core.getInput('duration', { required: false }) || "30"
-    const image: string = core.getInput('image') || "forallsecure/debian-buster:latest"
-    const sarifReport: string | undefined = core.getInput('sarif-report')
-    const htmlReport: string | undefined = core.getInput('html-report')
-    const ghtoken: string | undefined = core.getInput('github-token')
+    const duration: string = core.getInput('duration') || '30'
+    const image: string =
+      core.getInput('image') || 'forallsecure/debian-buster:latest'
+    // const sarifReport: string | undefined = core.getInput('sarif-report')
+    // const htmlReport: string | undefined = core.getInput('html-report')
+    // const ghtoken: string | undefined = core.getInput('github-token')
 
     // const oktokit = github.getOktokit(ghtoken)
     // const context = github.context
@@ -57,24 +58,28 @@ async function run(): Promise<void> {
 
     // Auto-generate target name
     const repo = process.env['GITHUB_REPOSITORY']
-    const account = repo?.split("/")[0].toLowerCase()
+    const account = repo?.split('/')[0].toLowerCase()
     if (repo === undefined) {
       throw Error(
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
       )
     }
 
-    const script = core.getInput('mayhem-script', { required: false }) || `
+    const script =
+      core.getInput('mayhem-script', { required: false }) ||
+      `
     for fuzz_target in $(cargo fuzz list); do
       echo $fuzz_target;
       cargo fuzz build $fuzz_target;
-      ${cli} package fuzz/target/*/*/$fuzz_target -o $fuzz_target;
-      rm -rf $fuzz_target/root/lib;
-      [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
-      sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
-      run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration} --baseimage ${image});
-      ${cli} wait $run -n ${account} --sarif local.sarif;
-      [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
+      for path in $(ls fuzz/target/*/*/$fuzz_target); do
+        ${cli} package $path -o $fuzz_target;
+        rm -rf $fuzz_target/root/lib;
+        [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
+        sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
+        run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration} --baseimage ${image});
+        ${cli} wait $run -n ${account} --sarif $fuzz_target.sarif;
+        [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
+      done
     done`
 
     process.env['MAYHEM_TOKEN'] = mayhemToken
@@ -89,7 +94,9 @@ async function run(): Promise<void> {
     //   ignoreReturnCode: true
     // })
     // Start fuzzing
-    const cliRunning = exec.exec("bash", ["-c", script], { ignoreReturnCode: true })
+    const cliRunning = exec.exec('bash', ['-c', script], {
+      ignoreReturnCode: true
+    })
     // cliRunning.stdout.on('data', (data: string) => core.debug(data))
     // cliRunning.stderr.on('data', (data: string) => core.debug(data))
     const res = await cliRunning
