@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as tc from '@actions/tool-cache'
+// import * as github from '@actions/github'
 import { chmodSync } from 'fs'
 import slugify from 'slugify'
 
@@ -43,10 +44,19 @@ async function run(): Promise<void> {
     const duration: string = core.getInput('duration', { required: false }) || "30"
     const sarifReport: string | undefined = core.getInput('sarif-report')
     const htmlReport: string | undefined = core.getInput('html-report')
+    const ghtoken: string | undefined = core.getInput('github-token')
+
+    // const oktokit = github.getOktokit(ghtoken)
+    // const context = github.context
+    // const { pull_request } = context.payload
+    // await octokit.rest.issues.createComment({
+    //   ...context.repo,
+
+    // })
 
     // Auto-generate target name
     const repo = process.env['GITHUB_REPOSITORY']
-    const account = repo?.split("/")[0]
+    const account = repo?.split("/")[0].toLowerCase()
     if (repo === undefined) {
       throw Error(
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
@@ -59,7 +69,7 @@ async function run(): Promise<void> {
       cargo fuzz build $fuzz_target
       ${cli} package fuzz/target/*/*/$fuzz_target -o $fuzz_target;
       [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
-      sed -i 's,project: .*,project: ${repo},g' $fuzz_target/Mayhemfile;
+      sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
       run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration})
       ${cli} wait $run -n ${account} --sarif local.sarif
       [[ "$(${cli} show $run | grep Defects | cut -f 2 -d :)" == " 0" ]]

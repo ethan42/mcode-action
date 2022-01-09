@@ -38,6 +38,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(186));
 const exec = __importStar(__nccwpck_require__(514));
 const tc = __importStar(__nccwpck_require__(784));
+// import * as github from '@actions/github'
 const fs_1 = __nccwpck_require__(747);
 // Return local path to donwloaded or cached CLI
 function mcodeCLI() {
@@ -74,9 +75,16 @@ function run() {
             const duration = core.getInput('duration', { required: false }) || "30";
             const sarifReport = core.getInput('sarif-report');
             const htmlReport = core.getInput('html-report');
+            const ghtoken = core.getInput('github-token');
+            // const oktokit = github.getOktokit(ghtoken)
+            // const context = github.context
+            // const { pull_request } = context.payload
+            // await octokit.rest.issues.createComment({
+            //   ...context.repo,
+            // })
             // Auto-generate target name
             const repo = process.env['GITHUB_REPOSITORY'];
-            const account = repo === null || repo === void 0 ? void 0 : repo.split("/")[0];
+            const account = repo === null || repo === void 0 ? void 0 : repo.split("/")[0].toLowerCase();
             if (repo === undefined) {
                 throw Error('Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?');
             }
@@ -86,7 +94,7 @@ function run() {
       cargo fuzz build $fuzz_target
       ${cli} package fuzz/target/*/*/$fuzz_target -o $fuzz_target;
       [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
-      sed -i 's,project: .*,project: ${repo},g' $fuzz_target/Mayhemfile;
+      sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
       run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration})
       ${cli} wait $run -n ${account} --sarif local.sarif
       [[ "$(${cli} show $run | grep Defects | cut -f 2 -d :)" == " 0" ]]
