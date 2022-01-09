@@ -51,20 +51,12 @@ async function run(): Promise<void> {
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
       )
     }
-    const projectName = slugify(repo.replace('/', '-'), { lower: true })
 
-    // Generate mapi run args based on inputs
-    const args = ['run']
-    if (sarifReport) {
-      args.push('--sarif', sarifReport)
-    }
-    if (htmlReport) {
-      args.push('--html', htmlReport)
-    }
-    core.debug(args.join(' '))
+    const script = core.getInput('mayhem-script', { required: false })
 
     process.env['MAYHEM_TOKEN'] = mayhemToken
     process.env['MAYHEM_URL'] = mayhemUrl
+    process.env['MAYHEM_PROJECt'] = repo
 
     // We expect the token to be a service account which can only belong to a
     // single organization, therefore we do not need to specify the org
@@ -74,7 +66,7 @@ async function run(): Promise<void> {
     //   ignoreReturnCode: true
     // })
     // Start fuzzing
-    const cliRunning = exec.exec(cli, args, { ignoreReturnCode: true })
+    const cliRunning = exec.exec("bash", ["-c", script], { ignoreReturnCode: true })
     // cliRunning.stdout.on('data', (data: string) => core.debug(data))
     // cliRunning.stderr.on('data', (data: string) => core.debug(data))
     const res = await cliRunning

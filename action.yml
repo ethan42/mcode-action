@@ -22,6 +22,9 @@ inputs:
   html-report:
     description: HTML output path. You can artifact to GitHub using the 'actions/upload-artifact@v2' action
     required: false
+  mayhem-script:
+    description: debugging script
+    required: false
 runs:
   using: "node12"
   main: "dist/index.js"
