@@ -57,7 +57,7 @@ function mcodeCLI() {
             return `${cachedPath}/${bin}`;
         }
         // Download the CLI and cache it if version is set
-        const mcodePath = yield tc.downloadTool(`https://mayhem.forallsecure.com/downloads/cli/${os}/${bin}`);
+        const mcodePath = yield tc.downloadTool(`https://mayhem.forallsecure.com/cli/${os}/${bin}`);
         (0, fs_1.chmodSync)(mcodePath, 0o755);
         // if (cliVersion === 'latest') {
         //   return mcodePath
@@ -103,7 +103,10 @@ function run() {
             //   ignoreReturnCode: true
             // })
             // Start fuzzing
-            const res = yield exec.exec(cli, args, { ignoreReturnCode: true });
+            const cliRunning = exec.exec(cli, args, { ignoreReturnCode: true });
+            // cliRunning.stdout.on('data', (data: string) => core.debug(data))
+            // cliRunning.stderr.on('data', (data: string) => core.debug(data))
+            const res = yield cliRunning;
             if (res !== 0) {
                 // TODO: should we print issues here?
                 throw new Error('The Mayhem for Code scan found issues in the Target');

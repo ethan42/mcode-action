@@ -74,7 +74,10 @@ async function run(): Promise<void> {
     //   ignoreReturnCode: true
     // })
     // Start fuzzing
-    const res = await exec.exec(cli, args, { ignoreReturnCode: true, shell: true, stdio: ['ignore', 'inherit', 'inherit'] })
+    const cliRunning = exec.exec(cli, args, { ignoreReturnCode: true })
+    // cliRunning.stdout.on('data', (data: string) => core.debug(data))
+    // cliRunning.stderr.on('data', (data: string) => core.debug(data))
+    const res = await cliRunning
     if (res !== 0) {
       // TODO: should we print issues here?
       throw new Error('The Mayhem for Code scan found issues in the Target')
