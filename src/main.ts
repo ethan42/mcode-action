@@ -82,8 +82,8 @@ async function run(): Promise<void> {
         rm -rf $fuzz_target/root/lib;
         [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
         sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
-        echo ${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration} --baseimage ${image};
-        run=$(${cli} run $fuzz_target --corpus file://$fuzz_target/corpus --duration ${duration} --baseimage ${image});
+        echo ${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus --duration ${duration} --baseimage ${image};
+        run=$(${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus --duration ${duration} --baseimage ${image});
         ${cli} wait $run -n ${account} --sarif $fuzz_target.sarif;
         [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
       done
