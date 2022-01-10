@@ -25,6 +25,9 @@ inputs:
   mayhem-script:
     description: debugging script
     required: false
+  github-token:
+    description: github token for posting feedback
+    required: false
 runs:
   using: "node12"
   main: "dist/index.js"
