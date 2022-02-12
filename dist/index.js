@@ -95,6 +95,7 @@ function run() {
             }
             const script = core.getInput('mayhem-script', { required: false }) ||
                 `
+    mkdir -p mayhem-out/sarif;
     for fuzz_target in $(cargo fuzz list); do
       echo $fuzz_target;
       cargo fuzz build $fuzz_target;
@@ -105,7 +106,7 @@ function run() {
         sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
         echo ${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus --duration ${duration} --baseimage ${image};
         run=$(${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus --duration ${duration} --baseimage ${image});
-        ${cli} wait $run -n ${account} --sarif $fuzz_target.sarif;
+        ${cli} wait $run -n ${account} --sarif mayhem-out/sarif/$fuzz_target.sarif;
         [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
       done
     done`;
