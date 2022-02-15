@@ -2,33 +2,22 @@ name: "Mayhem for Code"
 description: "Automatically test your Rust targets with Mayhem"
 author: "ForAllSecure"
 inputs:
-  mayhem-token:
-    description: Personal API token for authenticating to Mayhem
-    required: true
   mayhem-url:
     description: URL pointing to your Mayhem instance
     required: true
-  image:
-    description: Name of the image to run analysis in
-    default: forallsecure/debian-buster:latest
-    required: false
-  duration:
-    description: Scan duration
-    default: "30"
-    required: false
-  sarif-report:
-    description: SARIF output path. You can upload ot to GitHub using the 'github/codeql-action/upload-sarif@v1' action
-    required: false
-  html-report:
-    description: HTML output path. You can artifact to GitHub using the 'actions/upload-artifact@v2' action
-    required: false
-  mayhem-script:
-    description: debugging script
-    required: false
   github-token:
     description: github token for posting feedback
     required: false
     default: ${{ github.token }}
+  mayhem-token:
+    description: Personal API token for authenticating to Mayhem
+    required: true
+  sarif-output:
+    description: SARIF output directory. You can upload to to GitHub using the 'github/codeql-action/upload-sarif@v1' action
+    required: false
+  args:
+    description: command line arguments to override CLI behavior
+    required: false
 runs:
   using: "node12"
   main: "dist/index.js"

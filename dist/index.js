@@ -67,36 +67,55 @@ function run() {
             process.env['SKIP_MAPI_AUTO_UPDATE'] = 'true';
             const cli = yield mcodeCLI();
             // Load inputs
-            const mayhemToken = core.getInput('mayhem-token', { required: true });
             const mayhemUrl = core.getInput('mayhem-url', { required: true });
-            const duration = core.getInput('duration') || '30';
-            const image = core.getInput('image') || 'forallsecure/debian-buster:latest';
-            // const sarifReport: string | undefined = core.getInput('sarif-report')
-            // const htmlReport: string | undefined = core.getInput('html-report')
             const githubToken = core.getInput('github-token');
+            const mayhemToken = core.getInput('mayhem-token', { required: true });
+            const sarifOutput = core.getInput('sarif-output') || 'mayhem-out/sarif';
+            const args = (core.getInput('args') || '').split(' ');
+            // substitution first
+            if (!args.includes('--image')) {
+                args[args.indexOf('--image')] = '--baseimage';
+            }
+            // defaults next
+            if (!args.includes('--duration')) {
+                args.push('--duration', '30');
+            }
+            if (!args.includes('--baseimage')) {
+                args.push('--baseimage', 'forallsecure/debian-buster:latest');
+            }
+            const argsString = args.join(' ');
             // Auto-generate target name
             const repo = process.env['GITHUB_REPOSITORY'];
             const account = repo === null || repo === void 0 ? void 0 : repo.split('/')[0].toLowerCase();
             if (repo === undefined) {
                 throw Error('Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?');
             }
-            const script = core.getInput('mayhem-script', { required: false }) ||
-                `
-    mkdir -p mayhem-out/sarif;
-    for fuzz_target in $(cargo fuzz list); do
-      echo $fuzz_target;
-      cargo fuzz build $fuzz_target;
-      for path in $(ls fuzz/target/*/*/$fuzz_target); do
-        ${cli} package $path -o $fuzz_target;
-        rm -rf $fuzz_target/root/lib;
-        [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
-        sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
-        echo ${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus --duration ${duration} --baseimage ${image};
-        run=$(${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus --duration ${duration} --baseimage ${image});
-        ${cli} wait $run -n ${account} --sarif mayhem-out/sarif/$fuzz_target.sarif;
-        [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
+            // decide on the application type
+            const script = `
+    mkdir -p ${sarifOutput};
+    is_rust=$(cargo fuzz list);
+    if [ -n "$is_rust" ]; then
+      for fuzz_target in $is_rust; do
+        echo $fuzz_target;
+        cargo fuzz build $fuzz_target;
+        for path in $(ls fuzz/target/*/*/$fuzz_target); do
+          ${cli} package $path -o $fuzz_target;
+          rm -rf $fuzz_target/root/lib;
+          [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
+          sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
+          echo ${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus ${argsString};
+          run=$(${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus ${argsString});
+          ${cli} wait $run -n ${account} --sarif ${sarifOutput}/$fuzz_target.sarif;
+          [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
+        done
       done
-    done`;
+    else
+      echo ${cli} run . ${argsString};
+      run=$(${cli} run . ${argsString});
+      ${cli} wait $run -n ${account} --sarif ${sarifOutput}/target.sarif;
+      [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
+    fi
+`;
             if (githubToken !== undefined) {
                 const octokit = github.getOctokit(githubToken);
                 const context = github.context;
