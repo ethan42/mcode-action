@@ -110,6 +110,7 @@ function run() {
         done
       done
     else
+      sed -i 's,project: .*,project: ${repo.toLowerCase()},g' Mayhemfile;
       echo ${cli} run . ${argsString};
       run=$(${cli} run . ${argsString});
       ${cli} wait $run -n ${account} --sarif ${sarifOutput}/target.sarif;
