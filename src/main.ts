@@ -40,7 +40,7 @@ async function run(): Promise<void> {
     const sarifOutput: string = core.getInput('sarif-output') || 'mayhem-out/sarif'
     const args: string[] = (core.getInput('args') || '').split(' ')
     // substitution first
-    if (!args.includes('--image')) {
+    if (args.includes('--image')) {
       args[args.indexOf('--image')] = '--baseimage'
     }
 

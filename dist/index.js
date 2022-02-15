@@ -73,7 +73,7 @@ function run() {
             const sarifOutput = core.getInput('sarif-output') || 'mayhem-out/sarif';
             const args = (core.getInput('args') || '').split(' ');
             // substitution first
-            if (!args.includes('--image')) {
+            if (args.includes('--image')) {
                 args[args.indexOf('--image')] = '--baseimage';
             }
             // defaults next
