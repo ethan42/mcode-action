@@ -37,10 +37,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
-const tc = __importStar(__nccwpck_require__(7784));
 const github = __importStar(__nccwpck_require__(5438));
+const tc = __importStar(__nccwpck_require__(7784));
 const fs_1 = __nccwpck_require__(5747);
-// import slugify from 'slugify'
 // Return local path to donwloaded or cached CLI
 function mcodeCLI() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -57,9 +56,6 @@ function mcodeCLI() {
         // Download the CLI and cache it if version is set
         const mcodePath = yield tc.downloadTool(`https://mayhem.forallsecure.com/cli/${os}/${bin}`);
         (0, fs_1.chmodSync)(mcodePath, 0o755);
-        // if (cliVersion === 'latest') {
-        //   return mcodePath
-        // }
         const folder = yield tc.cacheFile(mcodePath, bin, bin, cliVersion, os);
         return `${folder}/${bin}`;
     });
@@ -78,15 +74,6 @@ function run() {
             // const sarifReport: string | undefined = core.getInput('sarif-report')
             // const htmlReport: string | undefined = core.getInput('html-report')
             const githubToken = core.getInput('github-token');
-            if (githubToken !== undefined) {
-                const octokit = github.getOctokit(githubToken);
-                const context = github.context;
-                const { pull_request } = context.payload;
-                if (pull_request !== undefined) {
-                    yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, context.repo), { issue_number: pull_request.number, body: 'Mayhem it!' }));
-                }
-                core.debug(`${octokit}`);
-            }
             // Auto-generate target name
             const repo = process.env['GITHUB_REPOSITORY'];
             const account = repo === null || repo === void 0 ? void 0 : repo.split('/')[0].toLowerCase();
@@ -110,22 +97,25 @@ function run() {
         [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
       done
     done`;
+            if (githubToken !== undefined) {
+                const octokit = github.getOctokit(githubToken);
+                const context = github.context;
+                const { pull_request } = context.payload;
+                if (pull_request !== undefined) {
+                    yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, context.repo), { issue_number: pull_request.number, body: `# Mayhem for Code
+
+          Mayhem is taking a look at this PR and will post results in checks.
+          ` }));
+                }
+                core.debug(`${octokit}`);
+            }
             process.env['MAYHEM_TOKEN'] = mayhemToken;
             process.env['MAYHEM_URL'] = mayhemUrl;
             process.env['MAYHEM_PROJECt'] = repo;
-            // We expect the token to be a service account which can only belong to a
-            // single organization, therefore we do not need to specify the org
-            // explicitely here. We also ignore failure since we might have created the
-            // target in a previous run.
-            // await exec.exec(cli, ['target', 'create', apiName, apiUrl], {
-            //   ignoreReturnCode: true
-            // })
             // Start fuzzing
             const cliRunning = exec.exec('bash', ['-c', script], {
                 ignoreReturnCode: true
             });
-            // cliRunning.stdout.on('data', (data: string) => core.debug(data))
-            // cliRunning.stderr.on('data', (data: string) => core.debug(data))
             const res = yield cliRunning;
             if (res !== 0) {
                 // TODO: should we print issues here?

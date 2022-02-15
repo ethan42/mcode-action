@@ -1,9 +1,8 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
-import * as tc from '@actions/tool-cache'
 import * as github from '@actions/github'
-import { chmodSync } from 'fs'
-// import slugify from 'slugify'
+import * as tc from '@actions/tool-cache'
+import {chmodSync} from 'fs'
 
 // Return local path to donwloaded or cached CLI
 async function mcodeCLI(): Promise<string> {
@@ -24,10 +23,6 @@ async function mcodeCLI(): Promise<string> {
     `https://mayhem.forallsecure.com/cli/${os}/${bin}`
   )
   chmodSync(mcodePath, 0o755)
-  // if (cliVersion === 'latest') {
-  //   return mcodePath
-  // }
-
   const folder = await tc.cacheFile(mcodePath, bin, bin, cliVersion, os)
   return `${folder}/${bin}`
 }
@@ -39,28 +34,14 @@ async function run(): Promise<void> {
     const cli = await mcodeCLI()
 
     // Load inputs
-    const mayhemToken: string = core.getInput('mayhem-token', { required: true })
-    const mayhemUrl: string = core.getInput('mayhem-url', { required: true })
+    const mayhemToken: string = core.getInput('mayhem-token', {required: true})
+    const mayhemUrl: string = core.getInput('mayhem-url', {required: true})
     const duration: string = core.getInput('duration') || '30'
     const image: string =
       core.getInput('image') || 'forallsecure/debian-buster:latest'
     // const sarifReport: string | undefined = core.getInput('sarif-report')
     // const htmlReport: string | undefined = core.getInput('html-report')
     const githubToken: string | undefined = core.getInput('github-token')
-
-    if (githubToken !== undefined) {
-      const octokit = github.getOctokit(githubToken)
-      const context = github.context
-      const { pull_request } = context.payload
-      if (pull_request !== undefined) {
-        await octokit.rest.issues.createComment({
-          ...context.repo,
-          issue_number: pull_request.number,
-          body: 'Mayhem it!'
-        })
-      }
-      core.debug(`${octokit}`)
-    }
 
     // Auto-generate target name
     const repo = process.env['GITHUB_REPOSITORY']
@@ -72,7 +53,7 @@ async function run(): Promise<void> {
     }
 
     const script =
-      core.getInput('mayhem-script', { required: false }) ||
+      core.getInput('mayhem-script', {required: false}) ||
       `
     mkdir -p mayhem-out/sarif;
     for fuzz_target in $(cargo fuzz list); do
@@ -90,23 +71,31 @@ async function run(): Promise<void> {
       done
     done`
 
+    if (githubToken !== undefined) {
+      const octokit = github.getOctokit(githubToken)
+      const context = github.context
+      const {pull_request} = context.payload
+      if (pull_request !== undefined) {
+        await octokit.rest.issues.createComment({
+          ...context.repo,
+          issue_number: pull_request.number,
+          body: `# Mayhem for Code
+
+          Mayhem is taking a look at this PR and will post results in checks.
+          `
+        })
+      }
+      core.debug(`${octokit}`)
+    }
+
     process.env['MAYHEM_TOKEN'] = mayhemToken
     process.env['MAYHEM_URL'] = mayhemUrl
     process.env['MAYHEM_PROJECt'] = repo
 
-    // We expect the token to be a service account which can only belong to a
-    // single organization, therefore we do not need to specify the org
-    // explicitely here. We also ignore failure since we might have created the
-    // target in a previous run.
-    // await exec.exec(cli, ['target', 'create', apiName, apiUrl], {
-    //   ignoreReturnCode: true
-    // })
     // Start fuzzing
     const cliRunning = exec.exec('bash', ['-c', script], {
       ignoreReturnCode: true
     })
-    // cliRunning.stdout.on('data', (data: string) => core.debug(data))
-    // cliRunning.stderr.on('data', (data: string) => core.debug(data))
     const res = await cliRunning
     if (res !== 0) {
       // TODO: should we print issues here?
