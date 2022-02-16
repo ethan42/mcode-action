@@ -78,7 +78,6 @@ async function run(): Promise<void> {
           echo ${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus ${argsString};
           run=$(${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus ${argsString});
           ${cli} wait $run -n ${account} --sarif ${sarifOutput}/$fuzz_target.sarif;
-          [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
         done
       done
     else
@@ -86,7 +85,6 @@ async function run(): Promise<void> {
       echo ${cli} run . ${argsString};
       run=$(${cli} run . ${argsString});
       ${cli} wait $run -n ${account} --sarif ${sarifOutput}/target.sarif;
-      [[ "$(${cli} show $run -n ${account} | grep Defects | cut -f 2 -d :)" == " 0" ]];
     fi
 `
     if (githubToken !== undefined) {
