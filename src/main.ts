@@ -62,7 +62,8 @@ async function run(): Promise<void> {
       )
     }
     const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`
-    const branch_name = process.env['GITHUB_REF_NAME'] || 'main'
+    const branch_name =
+      process.env['GITHUB_REF_NAME']?.slice('refs/heads/'.length) || 'main'
     const revision = process.env['GITHUB_SHA'] || 'unknown'
 
     args.push('--ci-url', ci_url)
