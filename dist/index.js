@@ -88,7 +88,7 @@ function run() {
             if (repo === undefined) {
                 throw Error('Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?');
             }
-            const ci_url = `${process.env['GITHUB_SERVER_URL']}/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
+            const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const branch_name = process.env['GITHUB_REF_NAME'] || 'main';
             const revision = process.env['GITHUB_SHA'] || 'unknown';
             args.push('--ci-url', ci_url);
