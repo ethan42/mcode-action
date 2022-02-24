@@ -61,21 +61,19 @@ async function run(): Promise<void> {
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
       )
     }
-    core.info(`event path: ${process.env['GITHUB_EVENT_PATH']}`)
-    core.info(`loaded string: ${readFileSync(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')}`)
     const event =
       JSON.parse(
         readFileSync(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')
       ) || {}
-    core.info(`json object: ${event}`)
-      const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`
-    const branch_name =
-      'head' in event
-        ? event.head.ref
-        : process.env['GITHUB_REF_NAME']?.slice('refs/heads/'.length) || 'main'
-    const revision =
-      'head' in event ? event.head.sha : process.env['GITHUB_SHA'] || 'unknown'
-    const merge_base_branch_name = 'base' in event ? event.base.ref : 'main'
+    const pull_request = event.pull_request
+    const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`
+    const branch_name = pull_request
+      ? pull_request.head.ref
+      : process.env['GITHUB_REF_NAME']?.slice('refs/heads/'.length) || 'main'
+    const revision = pull_request
+      ? pull_request.head.sha
+      : process.env['GITHUB_SHA'] || 'unknown'
+    const merge_base_branch_name = pull_request ? pull_request.base.ref : 'main'
 
     args.push('--ci-url', ci_url)
     args.push('--merge-base-branch-name', merge_base_branch_name)

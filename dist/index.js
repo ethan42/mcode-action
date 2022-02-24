@@ -89,16 +89,16 @@ function run() {
             if (repo === undefined) {
                 throw Error('Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?');
             }
-            core.info(`event path: ${process.env['GITHUB_EVENT_PATH']}`);
-            core.info(`loaded string: ${(0, fs_1.readFileSync)(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')}`);
             const event = JSON.parse((0, fs_1.readFileSync)(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')) || {};
-            core.info(`json object: ${event}`);
+            const pull_request = event.pull_request;
             const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
-            const branch_name = 'head' in event
-                ? event.head.ref
+            const branch_name = pull_request
+                ? pull_request.head.ref
                 : ((_a = process.env['GITHUB_REF_NAME']) === null || _a === void 0 ? void 0 : _a.slice('refs/heads/'.length)) || 'main';
-            const revision = 'head' in event ? event.head.sha : process.env['GITHUB_SHA'] || 'unknown';
-            const merge_base_branch_name = 'base' in event ? event.base.ref : 'main';
+            const revision = pull_request
+                ? pull_request.head.sha
+                : process.env['GITHUB_SHA'] || 'unknown';
+            const merge_base_branch_name = pull_request ? pull_request.base.ref : 'main';
             args.push('--ci-url', ci_url);
             args.push('--merge-base-branch-name', merge_base_branch_name);
             args.push('--branch-name', branch_name);
