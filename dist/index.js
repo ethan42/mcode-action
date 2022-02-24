@@ -89,7 +89,10 @@ function run() {
             if (repo === undefined) {
                 throw Error('Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?');
             }
+            core.info(`event path: ${process.env['GITHUB_EVENT_PATH']}`);
+            core.info(`loaded string: ${(0, fs_1.readFileSync)(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')}`);
             const event = JSON.parse((0, fs_1.readFileSync)(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')) || {};
+            core.info(`json object: ${event}`);
             const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`;
             const branch_name = 'head' in event
                 ? event.head.ref
