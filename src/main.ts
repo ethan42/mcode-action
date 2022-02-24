@@ -36,7 +36,7 @@ async function run(): Promise<void> {
     // Load inputs
     const mayhemUrl: string =
       core.getInput('mayhem-url') || 'https://mayhem.forallsecure.com'
-    // const githubToken: string | undefined = core.getInput('github-token')
+    const githubToken: string | undefined = core.getInput('github-token')
     const mayhemToken: string = core.getInput('mayhem-token', {required: true})
     const sarifOutput: string = core.getInput('sarif-output') || ''
     const args: string[] = (core.getInput('args') || '').split(' ')
@@ -56,6 +56,7 @@ async function run(): Promise<void> {
     // Auto-generate target name
     const repo = process.env['GITHUB_REPOSITORY']
     const account = repo?.split('/')[0].toLowerCase()
+    const project = repo?.split('/')[1].toLowerCase()
     if (repo === undefined) {
       throw Error(
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
@@ -101,6 +102,8 @@ async function run(): Promise<void> {
           run=$(${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus ${argsString});
           if [ -n "${sarifOutput}" ]; then
             ${cli} wait $run -n ${account} --sarif ${sarifOutput}/$fuzz_target.sarif;
+            run_number=$(echo $run | awk -F/ '{print $NF}')
+            curl -H 'X-Mayhem-Token: token ${mayhemToken}' https://${mayhemUrl}/api/v1/namespace/${account}/project/${project}/target/$fuzz_target/run/$run_number > $fuzz_target.json
           fi
         done
       done
@@ -110,29 +113,14 @@ async function run(): Promise<void> {
       run=$(${cli} run . ${argsString});
       if [ -n "${sarifOutput}" ]; then
         ${cli} wait $run -n ${account} --sarif ${sarifOutput}/target.sarif;
+        run_number=$(echo $run | awk -F/ '{print $NF}')
+        curl -H 'X-Mayhem-Token: token ${mayhemToken}' https://${mayhemUrl}/api/v1/namespace/${account}/project/${project}/target/$fuzz_target/run/$run_number > mayhem.json
       fi
     fi
 `
-    // if (githubToken !== undefined) {
-    //   const octokit = github.getOctokit(githubToken)
-    //   const context = github.context
-    //   const {pull_request} = context.payload
-    //   if (pull_request !== undefined) {
-    //     await octokit.rest.issues.createComment({
-    //       ...context.repo,
-    //       issue_number: pull_request.number,
-    //       body: `# Mayhem for Code
-
-    //       Mayhem is taking a look at this PR and will post results in checks.
-    //       `
-    //     })
-    //   }
-    //   core.debug(`${octokit}`)
-    // }
-
     process.env['MAYHEM_TOKEN'] = mayhemToken
     process.env['MAYHEM_URL'] = mayhemUrl
-    process.env['MAYHEM_PROJECt'] = repo
+    process.env['MAYHEM_PROJECT'] = repo
 
     // Start fuzzing
     const cliRunning = exec.exec('bash', ['-c', script], {
@@ -143,6 +131,35 @@ async function run(): Promise<void> {
       // TODO: should we print issues here?
       throw new Error('The Mayhem for Code scan found issues in the Target')
     }
+
+    if (githubToken !== undefined) {
+      const octokit = github.getOctokit(githubToken)
+      const context = github.context
+      const {gh_pull_request} = context.payload
+      const output = JSON.parse(readFileSync('mayhem.json', 'utf-8')) || {}
+      if (gh_pull_request !== undefined) {
+        await octokit.rest.issues.createComment({
+          ...context.repo,
+          issue_number: gh_pull_request.number,
+          body: `# [Mayhem for Code](${mayhemUrl}) Report
+  
+          Merging [#${gh_pull_request.number}](${gh_pull_request.html_url}) ${gh_pull_request.head.ref} (${gh_pull_request.head.sha.slice(0,8)}) into ${gh_pull_request.base.ref} (${gh_pull_request.base.sha.slice(0,8)})
+          
+          ## Defects: ${output.n_defects}
+
+          ## Testing Iterations Performed: ${output.tests_run} (${output.cputime} seconds)
+          
+          ## Testing Inputs Stored: ${output.n_testcase_reports}
+          
+          ## Dynamic Block Coverage: ${output.n_blocks_covered * 100.0 / output.n_blocks_total}%
+                              
+          [Continue to view full report in Mayhem for Code](${mayhemUrl}/${repo})
+          `
+        })
+      }
+      core.debug(`${octokit}`)
+    }
+
   } catch (err: unknown) {
     if (err instanceof Error) {
       core.info(`mcode action failed with: ${err.message}`)
