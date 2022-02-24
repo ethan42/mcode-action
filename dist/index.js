@@ -132,6 +132,7 @@ function run() {
       done
     else
       sed -i 's,project: .*,project: ${repo.toLowerCase()},g' Mayhemfile;
+      fuzz_target=$(grep target: Mayhemfile | awk '{print $NF}')
       echo ${cli} run . ${argsString};
       run=$(${cli} run . ${argsString});
       if [ -n "${sarifOutput}" ]; then
@@ -140,6 +141,7 @@ function run() {
         curl -H 'X-Mayhem-Token: token ${mayhemToken}' ${mayhemUrl}/api/v1/namespace/${account}/project/${project}/target/$fuzz_target/run/$run_number > mayhem.json
       fi
     fi
+    cat *.json || true
 `;
             process.env['MAYHEM_TOKEN'] = mayhemToken;
             process.env['MAYHEM_URL'] = mayhemUrl;
