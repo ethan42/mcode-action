@@ -2,7 +2,7 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as github from '@actions/github'
 import * as tc from '@actions/tool-cache'
-import {chmodSync} from 'fs'
+import {readFileSync, chmodSync} from 'fs'
 
 // Return local path to donwloaded or cached CLI
 async function mcodeCLI(): Promise<string> {
@@ -61,12 +61,21 @@ async function run(): Promise<void> {
         'Missing GITHUB_REPOSITORY environment variable. Are you not running this in a Github Action environement?'
       )
     }
+    const event =
+      JSON.parse(
+        readFileSync(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')
+      ) || {}
     const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`
     const branch_name =
-      process.env['GITHUB_REF_NAME']?.slice('refs/heads/'.length) || 'main'
-    const revision = process.env['GITHUB_SHA'] || 'unknown'
+      'head' in event
+        ? event.head.ref
+        : process.env['GITHUB_REF_NAME']?.slice('refs/heads/'.length) || 'main'
+    const revision =
+      'head' in event ? event.head.sha : process.env['GITHUB_SHA'] || 'unknown'
+    const merge_base_branch_name = 'base' in event ? event.base.ref : 'main'
 
     args.push('--ci-url', ci_url)
+    args.push('--merge-base-branch-name', merge_base_branch_name)
     args.push('--branch-name', branch_name)
     args.push('--revision', revision)
 
