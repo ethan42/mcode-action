@@ -66,15 +66,15 @@ async function run(): Promise<void> {
       JSON.parse(
         readFileSync(process.env['GITHUB_EVENT_PATH'] || 'event.json', 'utf-8')
       ) || {}
-    const pull_request = event.pull_request
+    const event_pull_request = event.pull_request
     const ci_url = `${process.env['GITHUB_SERVER_URL']}:443/${repo}/actions/runs/${process.env['GITHUB_RUN_ID']}`
-    const branch_name = pull_request
-      ? pull_request.head.ref
+    const branch_name = event_pull_request
+      ? event_pull_request.head.ref
       : process.env['GITHUB_REF_NAME']?.slice('refs/heads/'.length) || 'main'
-    const revision = pull_request
-      ? pull_request.head.sha
+    const revision = event_pull_request
+      ? event_pull_request.head.sha
       : process.env['GITHUB_SHA'] || 'unknown'
-    const merge_base_branch_name = pull_request ? pull_request.base.ref : 'main'
+    const merge_base_branch_name = event_pull_request ? event_pull_request.base.ref : 'main'
 
     args.push('--ci-url', ci_url)
     args.push('--merge-base-branch-name', merge_base_branch_name)
@@ -116,7 +116,6 @@ async function run(): Promise<void> {
         curl -H 'X-Mayhem-Token: token ${mayhemToken}' ${mayhemUrl}/api/v1/namespace/${account}/project/${project}/target/$fuzz_target/run/$run_number > mayhem.json
       fi
     fi
-    cat *.json || true
 `
     process.env['MAYHEM_TOKEN'] = mayhemToken
     process.env['MAYHEM_URL'] = mayhemUrl
@@ -135,16 +134,16 @@ async function run(): Promise<void> {
     if (githubToken !== undefined) {
       const octokit = github.getOctokit(githubToken)
       const context = github.context
-      const {gh_pull_request} = context.payload
+      const {pull_request} = context.payload
       const output = JSON.parse(readFileSync('mayhem.json', 'utf-8')) || {}
-      core.info(`pull request ready: ${gh_pull_request !== undefined}`)
-      if (gh_pull_request !== undefined) {
+      core.info(`pull request ready: ${pull_request !== undefined}`)
+      if (pull_request !== undefined) {
         await octokit.rest.issues.createComment({
           ...context.repo,
-          issue_number: gh_pull_request.number,
+          issue_number: pull_request.number,
           body: `# [Mayhem for Code](${mayhemUrl}) Report
   
-          Merging [#${gh_pull_request.number}](${gh_pull_request.html_url}) ${gh_pull_request.head.ref} (${gh_pull_request.head.sha.slice(0,8)}) into ${gh_pull_request.base.ref} (${gh_pull_request.base.sha.slice(0,8)})
+          Merging [#${pull_request.number}](${pull_request.html_url}) ${pull_request.head.ref} (${pull_request.head.sha.slice(0,8)}) into ${pull_request.base.ref} (${pull_request.base.sha.slice(0,8)})
           
           ## Defects: ${output.n_defects}
 
