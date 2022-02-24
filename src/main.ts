@@ -141,20 +141,21 @@ async function run(): Promise<void> {
         await octokit.rest.issues.createComment({
           ...context.repo,
           issue_number: pull_request.number,
-          body: `# [Mayhem for Code](${mayhemUrl}) Report
-  
-          Merging [#${pull_request.number}](${pull_request.html_url}) ${pull_request.head.ref} (${pull_request.head.sha.slice(0,8)}) into ${pull_request.base.ref} (${pull_request.base.sha.slice(0,8)})
-          
-          ## Defects: ${output.n_defects}
+          body: `# [Mayhem for Code](${mayhemUrl}) Report :warning:
 
-          ## Testing Iterations Performed: ${output.tests_run} (${output.cputime} seconds)
-          
-          ## Testing Inputs Stored: ${output.n_testcase_reports}
-          
-          ## Dynamic Block Coverage: ${output.n_blocks_covered * 100.0 / output.n_blocks_total}%
-                              
-          [Continue to view full report in Mayhem for Code](${mayhemUrl}/${repo})
-          `
+Merging [#${pull_request.number}](${pull_request.html_url}) ${pull_request.head.ref} (${pull_request.head.sha.slice(0,8)}) into ${pull_request.base.ref} (${pull_request.base.sha.slice(0,8)})
+
+## Active Defects: ${output.n_defects}
+
+## Testing Iterations Performed: ${output.tests_run} (${output.cputime} CPU seconds)
+
+## Testing Inputs Stored: ${output.n_testcase_reports}
+
+## Dynamic Block Coverage: ${output.n_blocks_covered * 100.0 / output.n_blocks_total}%
+
+[Continue to view full report in Mayhem for Code](${mayhemUrl}/${repo})
+
+`
         })
       }
       core.info(`token defined: ${githubToken !== undefined}`)
