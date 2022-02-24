@@ -157,7 +157,7 @@ async function run(): Promise<void> {
           `
         })
       }
-      core.debug(`${octokit}`)
+      core.info(`token defined: ${githubToken !== undefined}`)
     }
 
   } catch (err: unknown) {

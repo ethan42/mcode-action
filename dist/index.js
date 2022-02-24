@@ -174,7 +174,7 @@ function run() {
           [Continue to view full report in Mayhem for Code](${mayhemUrl}/${repo})
           ` }));
                 }
-                core.debug(`${octokit}`);
+                core.info(`token defined: ${githubToken !== undefined}`);
             }
         }
         catch (err) {
