@@ -108,7 +108,7 @@ async function run(): Promise<void> {
       done
     else
       sed -i 's,project: .*,project: ${repo.toLowerCase()},g' Mayhemfile;
-      fuzz_target=$(grep target: Mayhemfile | awk '{print $NF}')
+      fuzz_target=$(grep target: Mayhemfile | awk '{print $2}')
       run=$(${cli} run . ${argsString});
       if [ -n "${sarifOutput}" ]; then
         ${cli} wait $run -n ${account} --sarif ${sarifOutput}/target.sarif;
@@ -137,6 +137,7 @@ async function run(): Promise<void> {
       const context = github.context
       const {gh_pull_request} = context.payload
       const output = JSON.parse(readFileSync('mayhem.json', 'utf-8')) || {}
+      core.info(`pull request ready: ${gh_pull_request !== undefined}`)
       if (gh_pull_request !== undefined) {
         await octokit.rest.issues.createComment({
           ...context.repo,

@@ -131,7 +131,7 @@ function run() {
       done
     else
       sed -i 's,project: .*,project: ${repo.toLowerCase()},g' Mayhemfile;
-      fuzz_target=$(grep target: Mayhemfile | awk '{print $NF}')
+      fuzz_target=$(grep target: Mayhemfile | awk '{print $2}')
       run=$(${cli} run . ${argsString});
       if [ -n "${sarifOutput}" ]; then
         ${cli} wait $run -n ${account} --sarif ${sarifOutput}/target.sarif;
@@ -158,6 +158,7 @@ function run() {
                 const context = github.context;
                 const { gh_pull_request } = context.payload;
                 const output = JSON.parse((0, fs_1.readFileSync)('mayhem.json', 'utf-8')) || {};
+                core.info(`pull request ready: ${gh_pull_request !== undefined}`);
                 if (gh_pull_request !== undefined) {
                     yield octokit.rest.issues.createComment(Object.assign(Object.assign({}, context.repo), { issue_number: gh_pull_request.number, body: `# [Mayhem for Code](${mayhemUrl}) Report
   
