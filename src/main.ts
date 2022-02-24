@@ -145,13 +145,13 @@ async function run(): Promise<void> {
 
 Merging [#${pull_request.number}](${pull_request.html_url}) ${pull_request.head.ref} (${pull_request.head.sha.slice(0,8)}) into ${pull_request.base.ref} (${pull_request.base.sha.slice(0,8)})
 
-## Active Defects: ${output.n_defects}
+## Active Defects: ${output.n_defects} :x:
 
 ## Testing Iterations Performed: ${output.tests_run} (${output.cputime} CPU seconds)
 
 ## Testing Inputs Stored: ${output.n_testcase_reports}
 
-## Dynamic Block Coverage: ${output.n_blocks_covered * 100.0 / output.n_blocks_total}%
+## Dynamic Block Coverage: ${output.run_attributes.n_blocks_covered * 100.0 / output.run_attributes.n_blocks_total}%
 
 [Continue to view full report in Mayhem for Code](${mayhemUrl}/${repo})
 
