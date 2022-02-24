@@ -108,20 +108,19 @@ function run() {
             const argsString = args.join(' ');
             // decide on the application type
             const script = `
+    set -x
     if [ -n "${sarifOutput}" ]; then
       mkdir -p ${sarifOutput};
     fi
     is_rust=$(cargo fuzz list);
     if [ -n "$is_rust" ]; then
       for fuzz_target in $is_rust; do
-        echo $fuzz_target;
         cargo fuzz build $fuzz_target;
         for path in $(ls fuzz/target/*/*/$fuzz_target); do
           ${cli} package $path -o $fuzz_target;
           rm -rf $fuzz_target/root/lib;
           [[ -e fuzz/corpus/$fuzz_target ]] && cp fuzz/corpus/$fuzz_target/* $fuzz_target/corpus/;
           sed -i 's,project: .*,project: ${repo.toLowerCase()},g' $fuzz_target/Mayhemfile;
-          echo ${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus ${argsString};
           run=$(${cli} run $fuzz_target --corpus file://$(pwd)/$fuzz_target/corpus ${argsString});
           if [ -n "${sarifOutput}" ]; then
             ${cli} wait $run -n ${account} --sarif ${sarifOutput}/$fuzz_target.sarif;
@@ -133,7 +132,6 @@ function run() {
     else
       sed -i 's,project: .*,project: ${repo.toLowerCase()},g' Mayhemfile;
       fuzz_target=$(grep target: Mayhemfile | awk '{print $NF}')
-      echo ${cli} run . ${argsString};
       run=$(${cli} run . ${argsString});
       if [ -n "${sarifOutput}" ]; then
         ${cli} wait $run -n ${account} --sarif ${sarifOutput}/target.sarif;
